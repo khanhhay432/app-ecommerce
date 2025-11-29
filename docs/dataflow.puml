@@ -1,0 +1,286 @@
+@startuml DataFlow
+!define RECTANGLE class
+
+skinparam backgroundColor #FEFEFE
+skinparam componentStyle rectangle
+
+' Level 0 - Context Diagram
+package "Context Diagram - Level 0" {
+    actor "Khách hàng" as customer0
+    actor "Admin" as admin0
+    
+    rectangle "Hệ thống\nE-Commerce" as system0
+    
+    database "Database" as db0
+    
+    customer0 --> system0 : Đăng ký/Đăng nhập\nXem sản phẩm\nĐặt hàng
+    admin0 --> system0 : Quản lý sản phẩm\nQuản lý đơn hàng\nXem thống kê
+    system0 --> customer0 : Thông tin sản phẩm\nTrạng thái đơn hàng
+    system0 --> admin0 : Báo cáo\nThống kê
+    system0 <--> db0 : Lưu/Đọc dữ liệu
+}
+
+@enduml
+
+@startuml DataFlow_Level1
+!define RECTANGLE class
+
+' Level 1 - Main Processes
+package "Data Flow Diagram - Level 1" {
+    actor "Khách hàng" as customer1
+    actor "Admin" as admin1
+    
+    rectangle "1.0\nQuản lý\nNgười dùng" as p1
+    rectangle "2.0\nQuản lý\nSản phẩm" as p2
+    rectangle "3.0\nQuản lý\nGiỏ hàng" as p3
+    rectangle "4.0\nQuản lý\nĐơn hàng" as p4
+    rectangle "5.0\nQuản lý\nThống kê" as p5
+    
+    database "D1: Users" as d1
+    database "D2: Products" as d2
+    database "D3: Carts" as d3
+    database "D4: Orders" as d4
+    database "D5: Reviews" as d5
+    
+    ' Customer flows
+    customer1 --> p1 : Đăng ký/Đăng nhập
+    p1 --> customer1 : Thông tin tài khoản
+    
+    customer1 --> p2 : Xem/Tìm kiếm sản phẩm
+    p2 --> customer1 : Danh sách sản phẩm
+    
+    customer1 --> p3 : Thêm/Xóa/Cập nhật
+    p3 --> customer1 : Thông tin giỏ hàng
+    
+    customer1 --> p4 : Đặt hàng
+    p4 --> customer1 : Xác nhận đơn hàng
+    
+    ' Admin flows
+    admin1 --> p1 : Quản lý users
+    admin1 --> p2 : CRUD sản phẩm
+    admin1 --> p4 : Cập nhật trạng thái
+    admin1 --> p5 : Xem báo cáo
+    p5 --> admin1 : Thống kê
+    
+    ' Data store flows
+    p1 <--> d1
+    p2 <--> d2
+    p3 <--> d3
+    p4 <--> d4
+    p2 <--> d5
+    
+    ' Inter-process flows
+    p3 --> p4 : Thông tin giỏ hàng
+    p2 --> p3 : Thông tin sản phẩm
+    p2 --> p4 : Thông tin sản phẩm
+    p4 --> p5 : Dữ liệu đơn hàng
+    p2 --> p5 : Dữ liệu sản phẩm
+}
+
+@enduml
+
+@startuml DataFlow_Level2_Order
+!define RECTANGLE class
+
+' Level 2 - Order Management Detail
+package "Data Flow Diagram - Level 2: Quản lý Đơn hàng" {
+    actor "Khách hàng" as customer2
+    actor "Admin" as admin2
+    
+    rectangle "4.1\nTạo\nĐơn hàng" as p41
+    rectangle "4.2\nXác thực\nThông tin" as p42
+    rectangle "4.3\nTính toán\nGiá" as p43
+    rectangle "4.4\nXử lý\nThanh toán" as p44
+    rectangle "4.5\nCập nhật\nTrạng thái" as p45
+    rectangle "4.6\nGửi\nThông báo" as p46
+    
+    database "D3: Carts" as d3_2
+    database "D4: Orders" as d4_2
+    database "D6: Coupons" as d6
+    database "D7: Payments" as d7
+    
+    ' Customer flows
+    customer2 --> p41 : Thông tin đặt hàng
+    p41 --> p42 : Dữ liệu đơn hàng
+    p42 --> p43 : Đơn hàng hợp lệ
+    p43 --> p44 : Tổng tiền
+    p44 --> p45 : Thanh toán thành công
+    p45 --> p46 : Trạng thái đơn hàng
+    p46 --> customer2 : Email xác nhận
+    
+    ' Admin flows
+    admin2 --> p45 : Cập nhật trạng thái
+    p45 --> admin2 : Xác nhận
+    
+    ' Data store flows
+    p41 <--> d3_2 : Đọc giỏ hàng
+    p42 <--> d6 : Kiểm tra coupon
+    p43 <--> d6 : Áp dụng giảm giá
+    p44 <--> d7 : Lưu thanh toán
+    p45 <--> d4_2 : Lưu/Cập nhật đơn
+}
+
+@enduml
+
+@startuml SequenceDiagram_Checkout
+title Sequence Diagram: Quy trình Thanh toán
+
+actor "Khách hàng" as customer
+participant "UI" as ui
+participant "AppProvider" as provider
+participant "Cart" as cart
+participant "Order" as order
+participant "Payment" as payment
+database "Database" as db
+
+customer -> ui : Nhấn "Thanh toán"
+ui -> provider : getCartItems()
+provider -> cart : fetchCartItems()
+cart --> provider : cartItems
+provider --> ui : Hiển thị giỏ hàng
+
+customer -> ui : Nhập thông tin giao hàng
+customer -> ui : Chọn phương thức thanh toán
+customer -> ui : Nhập mã giảm giá (optional)
+
+ui -> provider : applyCoupon(code)
+provider -> db : validateCoupon(code)
+db --> provider : couponInfo
+provider --> ui : discountAmount
+
+customer -> ui : Xác nhận đặt hàng
+
+ui -> provider : createOrder(orderData)
+provider -> order : validateOrder(orderData)
+order --> provider : valid
+
+provider -> payment : processPayment(paymentInfo)
+payment --> provider : paymentSuccess
+
+provider -> db : saveOrder(order)
+db --> provider : orderId
+
+provider -> cart : clearCart()
+cart -> db : deleteCartItems()
+
+provider --> ui : orderSuccess
+ui --> customer : Hiển thị màn hình thành công
+
+provider -> payment : sendConfirmationEmail()
+payment --> customer : Email xác nhận
+
+@enduml
+
+@startuml ActivityDiagram_Shopping
+title Activity Diagram: Quy trình Mua sắm
+
+start
+
+:Khách hàng truy cập app;
+
+if (Đã đăng nhập?) then (Không)
+  :Đăng nhập/Đăng ký;
+else (Có)
+endif
+
+:Xem danh sách sản phẩm;
+
+repeat
+  :Chọn sản phẩm;
+  :Xem chi tiết;
+  
+  if (Thích sản phẩm?) then (Có)
+    :Thêm vào giỏ hàng;
+  else (Không)
+    :Quay lại danh sách;
+  endif
+  
+repeat while (Tiếp tục mua sắm?) is (Có)
+->Không;
+
+:Xem giỏ hàng;
+
+if (Giỏ hàng có sản phẩm?) then (Không)
+  :Thông báo giỏ hàng trống;
+  stop
+else (Có)
+endif
+
+:Cập nhật số lượng (optional);
+
+:Nhập thông tin giao hàng;
+
+:Chọn phương thức thanh toán;
+
+if (Có mã giảm giá?) then (Có)
+  :Nhập mã giảm giá;
+  :Áp dụng giảm giá;
+else (Không)
+endif
+
+:Xác nhận đơn hàng;
+
+fork
+  :Xử lý thanh toán;
+fork again
+  :Tạo đơn hàng;
+fork again
+  :Gửi email xác nhận;
+end fork
+
+:Hiển thị thông báo thành công;
+
+:Xóa giỏ hàng;
+
+stop
+
+@enduml
+
+@startuml StateDiagram_Order
+title State Diagram: Trạng thái Đơn hàng
+
+[*] --> PENDING : Tạo đơn hàng
+
+PENDING --> CONFIRMED : Admin xác nhận
+PENDING --> CANCELLED : Khách hàng/Admin hủy
+
+CONFIRMED --> SHIPPING : Bắt đầu giao hàng
+CONFIRMED --> CANCELLED : Admin hủy
+
+SHIPPING --> DELIVERED : Giao hàng thành công
+SHIPPING --> CANCELLED : Giao hàng thất bại
+
+DELIVERED --> COMPLETED : Khách hàng xác nhận
+DELIVERED --> RETURNED : Khách hàng trả hàng
+
+COMPLETED --> [*]
+CANCELLED --> [*]
+RETURNED --> REFUNDED : Hoàn tiền
+REFUNDED --> [*]
+
+note right of PENDING
+  Đơn hàng mới tạo
+  Chờ xác nhận
+end note
+
+note right of CONFIRMED
+  Đã xác nhận
+  Chuẩn bị hàng
+end note
+
+note right of SHIPPING
+  Đang giao hàng
+  Có mã vận đơn
+end note
+
+note right of DELIVERED
+  Đã giao thành công
+  Chờ đánh giá
+end note
+
+note right of COMPLETED
+  Hoàn tất
+  Có thể đánh giá
+end note
+
+@enduml

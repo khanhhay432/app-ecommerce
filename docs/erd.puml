@@ -1,0 +1,190 @@
+@startuml ERD
+!define Table(name,desc) class name as "desc" << (T,#FFAAAA) >>
+!define primary_key(x) <b>x</b>
+!define foreign_key(x) <i>x</i>
+!define unique(x) <u>x</u>
+
+hide methods
+hide stereotypes
+
+' Entities
+entity "USERS" as users {
+  primary_key(id) : INT
+  --
+  unique(email) : VARCHAR(255)
+  password : VARCHAR(255)
+  full_name : VARCHAR(100)
+  phone : VARCHAR(20)
+  avatar_url : TEXT
+  role : ENUM('ADMIN','CUSTOMER')
+  is_active : BOOLEAN
+  created_at : TIMESTAMP
+  updated_at : TIMESTAMP
+}
+
+entity "ADDRESSES" as addresses {
+  primary_key(id) : INT
+  --
+  foreign_key(user_id) : INT
+  recipient_name : VARCHAR(100)
+  phone : VARCHAR(20)
+  province : VARCHAR(100)
+  district : VARCHAR(100)
+  ward : VARCHAR(100)
+  street_address : TEXT
+  is_default : BOOLEAN
+  created_at : TIMESTAMP
+}
+
+entity "CATEGORIES" as categories {
+  primary_key(id) : INT
+  --
+  name : VARCHAR(100)
+  description : TEXT
+  image_url : TEXT
+  foreign_key(parent_id) : INT
+  is_active : BOOLEAN
+  created_at : TIMESTAMP
+}
+
+entity "PRODUCTS" as products {
+  primary_key(id) : INT
+  --
+  foreign_key(category_id) : INT
+  name : VARCHAR(255)
+  description : TEXT
+  price : DECIMAL(15,2)
+  original_price : DECIMAL(15,2)
+  stock_quantity : INT
+  sold_quantity : INT
+  image_url : TEXT
+  is_active : BOOLEAN
+  is_featured : BOOLEAN
+  created_at : TIMESTAMP
+  updated_at : TIMESTAMP
+}
+
+entity "PRODUCT_IMAGES" as product_images {
+  primary_key(id) : INT
+  --
+  foreign_key(product_id) : INT
+  image_url : TEXT
+  is_primary : BOOLEAN
+  sort_order : INT
+}
+
+entity "REVIEWS" as reviews {
+  primary_key(id) : INT
+  --
+  foreign_key(product_id) : INT
+  foreign_key(user_id) : INT
+  foreign_key(order_id) : INT
+  rating : INT
+  comment : TEXT
+  images : JSON
+  is_verified : BOOLEAN
+  is_visible : BOOLEAN
+  created_at : TIMESTAMP
+  updated_at : TIMESTAMP
+}
+
+entity "WISHLISTS" as wishlists {
+  primary_key(id) : INT
+  --
+  foreign_key(user_id) : INT
+  foreign_key(product_id) : INT
+  created_at : TIMESTAMP
+}
+
+entity "CARTS" as carts {
+  primary_key(id) : INT
+  --
+  foreign_key(user_id) : INT
+  created_at : TIMESTAMP
+  updated_at : TIMESTAMP
+}
+
+entity "CART_ITEMS" as cart_items {
+  primary_key(id) : INT
+  --
+  foreign_key(cart_id) : INT
+  foreign_key(product_id) : INT
+  quantity : INT
+  created_at : TIMESTAMP
+}
+
+entity "ORDERS" as orders {
+  primary_key(id) : INT
+  --
+  foreign_key(user_id) : INT
+  order_number : VARCHAR(50)
+  status : ENUM
+  subtotal : DECIMAL(15,2)
+  discount_amount : DECIMAL(15,2)
+  shipping_fee : DECIMAL(15,2)
+  total_amount : DECIMAL(15,2)
+  foreign_key(coupon_id) : INT
+  payment_method : VARCHAR(50)
+  payment_status : VARCHAR(50)
+  foreign_key(shipping_address_id) : INT
+  shipping_name : VARCHAR(100)
+  shipping_phone : VARCHAR(20)
+  shipping_address : TEXT
+  note : TEXT
+  created_at : TIMESTAMP
+  updated_at : TIMESTAMP
+}
+
+entity "ORDER_ITEMS" as order_items {
+  primary_key(id) : INT
+  --
+  foreign_key(order_id) : INT
+  foreign_key(product_id) : INT
+  product_name : VARCHAR(255)
+  product_image : TEXT
+  price : DECIMAL(15,2)
+  quantity : INT
+  subtotal : DECIMAL(15,2)
+}
+
+entity "COUPONS" as coupons {
+  primary_key(id) : INT
+  --
+  unique(code) : VARCHAR(50)
+  description : TEXT
+  discount_type : ENUM('PERCENT','FIXED')
+  discount_value : DECIMAL(15,2)
+  min_order_amount : DECIMAL(15,2)
+  max_discount : DECIMAL(15,2)
+  usage_limit : INT
+  used_count : INT
+  start_date : TIMESTAMP
+  end_date : TIMESTAMP
+  is_active : BOOLEAN
+  created_at : TIMESTAMP
+}
+
+' Relationships
+users ||--o{ addresses : "has"
+users ||--o{ wishlists : "has"
+users ||--o{ carts : "has"
+users ||--o{ orders : "places"
+users ||--o{ reviews : "writes"
+
+categories ||--o{ categories : "parent"
+categories ||--o{ products : "contains"
+
+products ||--o{ product_images : "has"
+products ||--o{ reviews : "receives"
+products ||--o{ wishlists : "in"
+products ||--o{ cart_items : "in"
+products ||--o{ order_items : "in"
+
+carts ||--o{ cart_items : "contains"
+
+orders ||--o{ order_items : "contains"
+orders }o--|| addresses : "ships to"
+orders }o--o| coupons : "uses"
+orders ||--o{ reviews : "reviewed in"
+
+@enduml

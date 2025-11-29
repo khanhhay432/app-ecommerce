@@ -1,0 +1,317 @@
+@startsalt Wireframe_Splash
+title Splash Screen
+{
+  {
+    .
+    .
+    {
+      [  🛍️  ]
+      **ShopNow**
+      "Mua sắm thông minh"
+    }
+    .
+    ⚪ Loading...
+    .
+  }
+}
+@endsalt
+
+@startsalt Wireframe_Home
+title Home Screen
+{
+  {T
+    + ☰ Menu | 🛍️ ShopNow | 🔍 Search | 🛒(3) | 👤
+  }
+  --
+  {
+    [                BANNER SLIDER                ]
+    [  📱 iPhone 16 Pro Max - Siêu phẩm mới nhất  ]
+    [              ◀ ● ○ ○ ▶                      ]
+  }
+  --
+  **DANH MỤC SẢN PHẨM**
+  {
+    📱 | 💻 | 👔 | 👗 | 🏠 | 📚 | ⌚ | 🎒
+    Điện thoại | Laptop | Nam | Nữ | Gia dụng | Sách | Đồng hồ | Phụ kiện
+  }
+  --
+  **🔥 SẢN PHẨM NỔI BẬT** | Xem tất cả ▶
+  {
+    [IMG] | [IMG] | [IMG] | [IMG]
+    iPhone 15 | MacBook Pro | Samsung S24 | AirPods Pro
+    34.990.000₫ | 52.990.000₫ | 31.990.000₫ | 6.490.000₫
+    ⭐ 4.8 (156) | ⭐ 4.9 (89) | ⭐ 4.7 (98) | ⭐ 4.8 (234)
+    ❤️ | ❤️ | ❤️ | ❤️
+  }
+  --
+  **📈 BÁN CHẠY NHẤT** | Xem tất cả ▶
+  {
+    [IMG] | [IMG] | [IMG] | [IMG]
+    Đắc Nhân Tâm | Quần Jean | Nồi chiên | Đầm Maxi
+    108.000₫ | 650.000₫ | 3.290.000₫ | 750.000₫
+    Đã bán 1200 | Đã bán 280 | Đã bán 95 | Đã bán 180
+  }
+  --
+  {T
+    + 🏠 Trang chủ | 📂 Danh mục | 👤 Tài khoản
+  }
+}
+@endsalt
+
+@startsalt Wireframe_ProductDetail
+title Product Detail Screen
+{
+  {T
+    + ◀ Back | iPhone 15 Pro Max | 🛒 ❤️ ⋯
+  }
+  --
+  {
+    [                                              ]
+    [          📱 PRODUCT IMAGE                    ]
+    [                                              ]
+    [              ◀ ● ○ ○ ○ ▶                    ]
+  }
+  --
+  **iPhone 15 Pro Max 256GB** | ⭐ 4.8 (156)
+  **34.990.000₫** ~~36.990.000₫~~ 🏷️ -5%
+  --
+  📦 Còn lại: 50 sản phẩm
+  🚚 Miễn phí vận chuyển cho đơn từ 500.000₫
+  🎁 Tặng kèm ốp lưng + cường lực
+  --
+  **📝 MÔ TẢ SẢN PHẨM**
+  {
+    iPhone 15 Pro Max với chip A17 Pro mạnh mẽ,
+    camera 48MP chụp ảnh sắc nét, khung titan cao cấp,
+    màn hình Super Retina XDR 6.7 inch...
+  }
+  --
+  **💬 ĐÁNH GIÁ (156)** | Xem tất cả ▶
+  {
+    👤 Nguyễn Văn A | ⭐⭐⭐⭐⭐ | 20/11/2024
+    "Sản phẩm tuyệt vời, đóng gói cẩn thận!"
+  }
+  --
+  {
+    Số lượng: [-] 1 [+] | [THÊM VÀO GIỎ] | [MUA NGAY]
+  }
+}
+@endsalt
+
+@startsalt Wireframe_Cart
+title Cart Screen
+{
+  {T
+    + ◀ Back | Giỏ hàng (3)
+  }
+  --
+  {
+    [IMG] | iPhone 15 Pro Max 256GB | ❌
+    . | 34.990.000₫ | .
+    . | Số lượng: [-] 1 [+] | .
+  }
+  --
+  {
+    [IMG] | MacBook Pro M3 | ❌
+    . | 52.990.000₫ | .
+    . | Số lượng: [-] 1 [+] | .
+  }
+  --
+  {
+    [IMG] | AirPods Pro 2 | ❌
+    . | 6.490.000₫ | .
+    . | Số lượng: [-] 2 [+] | .
+  }
+  --
+  **MÃ GIẢM GIÁ**
+  {
+    [Nhập mã giảm giá                    ] | [ÁP DỤNG]
+  }
+  --
+  **TỔNG CỘNG**
+  {
+    Tạm tính: | 100.960.000₫
+    Giảm giá: | -10.000.000₫
+    Phí vận chuyển: | 0₫
+    **Tổng tiền:** | **90.960.000₫**
+  }
+  --
+  {
+    [           TIẾN HÀNH THANH TOÁN           ]
+  }
+}
+@endsalt
+
+@startsalt Wireframe_Checkout
+title Checkout Screen
+{
+  {T
+    + ◀ Back | Thanh toán
+  }
+  --
+  **📍 THÔNG TIN GIAO HÀNG**
+  {
+    Họ tên: | [Nguyễn Văn A                        ]
+    Số điện thoại: | [0912345678                   ]
+    Địa chỉ: | [123 Đường ABC, Quận 1, TP.HCM       ]
+    .        | [                                    ]
+  }
+  --
+  **💳 PHƯƠNG THỨC THANH TOÁN**
+  {
+    (X) Thanh toán khi nhận hàng (COD)
+    ( ) Chuyển khoản ngân hàng
+    ( ) Ví điện tử (MoMo, ZaloPay)
+  }
+  --
+  **📦 SẢN PHẨM (3)**
+  {
+    iPhone 15 Pro Max x1 | 34.990.000₫
+    MacBook Pro M3 x1 | 52.990.000₫
+    AirPods Pro 2 x2 | 12.980.000₫
+  }
+  --
+  **💰 TỔNG THANH TOÁN**
+  {
+    Tạm tính: | 100.960.000₫
+    Giảm giá: | -10.000.000₫
+    Phí vận chuyển: | 0₫
+    **Tổng cộng:** | **90.960.000₫**
+  }
+  --
+  {
+    [           ĐẶT HÀNG           ]
+  }
+}
+@endsalt
+
+@startsalt Wireframe_OrderSuccess
+title Order Success Screen
+{
+  {
+    .
+    ✅
+    **ĐẶT HÀNG THÀNH CÔNG!**
+    .
+    Mã đơn hàng: **#ORD1234567890**
+    .
+    Cảm ơn bạn đã đặt hàng!
+    Chúng tôi sẽ liên hệ với bạn sớm nhất.
+    .
+    {
+      [XEM CHI TIẾT ĐƠN HÀNG]
+    }
+    .
+    {
+      [TIẾP TỤC MUA SẮM]
+    }
+    .
+  }
+}
+@endsalt
+
+@startsalt Wireframe_Orders
+title Orders Screen
+{
+  {T
+    + ◀ Back | Đơn hàng của tôi
+  }
+  --
+  {T
+    + Tất cả | Chờ xử lý | Đang giao | Hoàn thành | Đã hủy
+  }
+  --
+  {
+    **Đơn hàng #ORD1234567890** | 🟡 Chờ xử lý
+    20/11/2024 | 90.960.000₫
+    3 sản phẩm | [XEM CHI TIẾT]
+  }
+  --
+  {
+    **Đơn hàng #ORD1234567889** | 🟢 Hoàn thành
+    15/11/2024 | 34.990.000₫
+    1 sản phẩm | [XEM CHI TIẾT] | [ĐÁNH GIÁ]
+  }
+  --
+  {
+    **Đơn hàng #ORD1234567888** | 🔵 Đang giao
+    10/11/2024 | 52.990.000₫
+    1 sản phẩm | [XEM CHI TIẾT] | [THEO DÕI]
+  }
+}
+@endsalt
+
+@startsalt Wireframe_Login
+title Login Screen
+{
+  {
+    .
+    {
+      [  🛍️  ]
+      **ShopNow**
+    }
+    .
+  }
+  --
+  **Chào mừng trở lại! 👋**
+  Đăng nhập để tiếp tục mua sắm
+  --
+  {
+    Email: | [email@example.com                    ]
+    Mật khẩu: | [••••••••••                       ] | 👁️
+  }
+  --
+  {
+    [           ĐĂNG NHẬP           ]
+  }
+  --
+  **📋 TÀI KHOẢN TEST**
+  {
+    👨‍💼 Quản trị viên
+    admin@shopnow.com / admin123
+    [CHẠM ĐỂ ĐIỀN]
+    
+    👤 Khách hàng
+    customer@gmail.com / customer123
+    [CHẠM ĐỂ ĐIỀN]
+  }
+  --
+  Chưa có tài khoản? | **Đăng ký ngay**
+}
+@endsalt
+
+@startsalt Wireframe_AdminPanel
+title Admin Panel
+{
+  {T
+    + ◀ Back | Quản trị viên
+  }
+  --
+  {
+    [👨‍💼]
+    **Chào mừng, Admin!**
+    Quản lý cửa hàng của bạn
+    ✅ Quyền: Quản trị viên toàn quyền
+  }
+  --
+  **THỐNG KÊ TỔNG QUAN**
+  {
+    [💰] | [📦] | [📂] | [👥]
+    Doanh thu | Đơn hàng | Sản phẩm | Khách hàng
+    90.960.000₫ | 156 | 20 | 1,234
+  }
+  --
+  **THAO TÁC NHANH**
+  {
+    [➕ Thêm sản phẩm] | [📋 Quản lý đơn hàng]
+    [📊 Thống kê] | [⚙️ Cài đặt]
+  }
+  --
+  **ĐƠN HÀNG GẦN ĐÂY**
+  {
+    #ORD123 | Nguyễn Văn A | 🟡 Chờ xử lý
+    #ORD122 | Trần Thị B | 🔵 Đang giao
+    #ORD121 | Lê Văn C | 🟢 Hoàn thành
+  }
+}
+@endsalt

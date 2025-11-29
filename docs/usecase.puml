@@ -1,0 +1,120 @@
+@startuml UseCase
+left to right direction
+skinparam packageStyle rectangle
+
+actor "Khách hàng" as customer
+actor "Admin" as admin
+actor "Hệ thống Thanh toán" as payment
+actor "Hệ thống Giao hàng" as shipping
+actor "Hệ thống Email" as email
+
+rectangle "Hệ thống E-Commerce" {
+  ' Customer use cases
+  usecase "Đăng ký tài khoản" as UC1
+  usecase "Đăng nhập" as UC2
+  usecase "Xem danh sách sản phẩm" as UC3
+  usecase "Xem chi tiết sản phẩm" as UC4
+  usecase "Tìm kiếm sản phẩm" as UC5
+  usecase "Lọc theo danh mục" as UC6
+  usecase "Thêm vào giỏ hàng" as UC7
+  usecase "Xem giỏ hàng" as UC8
+  usecase "Cập nhật số lượng" as UC9
+  usecase "Xóa khỏi giỏ hàng" as UC10
+  usecase "Thêm/xóa yêu thích" as UC11
+  usecase "Xem danh sách yêu thích" as UC12
+  usecase "Áp dụng mã giảm giá" as UC13
+  usecase "Đặt hàng" as UC14
+  usecase "Chọn phương thức thanh toán" as UC15
+  usecase "Nhập thông tin giao hàng" as UC16
+  usecase "Xem lịch sử đơn hàng" as UC17
+  usecase "Xem chi tiết đơn hàng" as UC18
+  usecase "Theo dõi trạng thái" as UC19
+  usecase "Đánh giá sản phẩm" as UC20
+  usecase "Đăng xuất" as UC21
+  
+  ' Admin use cases
+  usecase "Quản lý sản phẩm" as UC22
+  usecase "Thêm sản phẩm" as UC23
+  usecase "Sửa sản phẩm" as UC24
+  usecase "Xóa sản phẩm" as UC25
+  usecase "Quản lý danh mục" as UC26
+  usecase "Thêm danh mục" as UC27
+  usecase "Sửa danh mục" as UC28
+  usecase "Quản lý đơn hàng" as UC29
+  usecase "Xem tất cả đơn hàng" as UC30
+  usecase "Cập nhật trạng thái đơn" as UC31
+  usecase "Xem thống kê" as UC32
+  usecase "Thống kê doanh thu" as UC33
+  usecase "Thống kê sản phẩm bán chạy" as UC34
+  usecase "Xem đánh giá" as UC35
+  
+  ' External system use cases
+  usecase "Xử lý thanh toán" as UC36
+  usecase "Tính phí vận chuyển" as UC37
+  usecase "Theo dõi đơn hàng" as UC38
+  usecase "Gửi email xác nhận" as UC39
+  usecase "Gửi thông báo" as UC40
+}
+
+' Customer relationships
+customer --> UC1
+customer --> UC2
+customer --> UC3
+customer --> UC4
+customer --> UC5
+customer --> UC6
+customer --> UC7
+customer --> UC8
+customer --> UC9
+customer --> UC10
+customer --> UC11
+customer --> UC12
+customer --> UC13
+customer --> UC14
+customer --> UC15
+customer --> UC16
+customer --> UC17
+customer --> UC18
+customer --> UC19
+customer --> UC20
+customer --> UC21
+
+' Admin relationships
+admin --> UC2
+admin --> UC22
+admin --> UC26
+admin --> UC29
+admin --> UC32
+admin --> UC21
+
+' Include relationships
+UC22 ..> UC23 : <<include>>
+UC22 ..> UC24 : <<include>>
+UC22 ..> UC25 : <<include>>
+
+UC26 ..> UC27 : <<include>>
+UC26 ..> UC28 : <<include>>
+
+UC29 ..> UC30 : <<include>>
+UC29 ..> UC31 : <<include>>
+
+UC32 ..> UC33 : <<include>>
+UC32 ..> UC34 : <<include>>
+UC32 ..> UC35 : <<include>>
+
+' Extend relationships
+UC14 ..> UC13 : <<extend>>
+UC14 ..> UC15 : <<extend>>
+UC14 ..> UC16 : <<extend>>
+
+' External system relationships
+UC15 --> payment
+UC14 --> shipping
+UC14 --> email
+UC36 <-- payment
+UC37 <-- shipping
+UC38 <-- shipping
+UC39 <-- email
+UC40 <-- email
+
+@enduml

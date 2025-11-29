@@ -1,0 +1,77 @@
+@startuml Architecture
+!define RECTANGLE class
+
+skinparam backgroundColor #FEFEFE
+skinparam componentStyle rectangle
+
+package "Presentation Layer" {
+    [Screens] as screens
+    [Widgets] as widgets
+    [Theme] as theme
+    [Animations] as animations
+    
+    screens : Home Screen
+    screens : Login Screen
+    screens : Cart Screen
+    screens : Checkout Screen
+    screens : Orders Screen
+    
+    widgets : Product Card
+    widgets : Shimmer Loading
+    widgets : Admin Panel
+    widgets : Optimized Image
+    
+    theme : Colors
+    theme : Fonts
+    theme : Gradients
+    theme : Spacing
+    
+    animations : Splash
+    animations : Page Transition
+    animations : Loading States
+}
+
+package "Business Logic Layer" {
+    [AppProvider] as provider
+    
+    provider : Authentication
+    provider : Product Management
+    provider : Order Management
+    provider : Cart Management
+    provider : Wishlist Management
+    provider : Coupon System
+}
+
+package "Data Layer" {
+    [Models] as models
+    [Mock Data] as mockdata
+    [Utils] as utils
+    [Database] as database
+    
+    models : User
+    models : Product
+    models : Category
+    models : Cart Item
+    models : Order
+    
+    mockdata : Products
+    mockdata : Categories
+    mockdata : Test Accounts
+    mockdata : Coupons
+    
+    utils : Currency Formatter
+    utils : Validators
+    utils : Constants
+    
+    database : Schema
+    database : Seed Data
+}
+
+screens --> provider
+widgets --> provider
+provider --> models
+provider --> mockdata
+models --> database
+mockdata --> database
+
+@enduml
