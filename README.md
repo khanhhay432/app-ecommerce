@@ -53,7 +53,7 @@ spring:
     password: your_password
 
 app:
-  base-url: http://192.168.1.88  # Thay bằng IP máy bạn
+  base-url:   # Thay bằng IP máy bạn
 ```
 
 ### Flutter
