@@ -28,9 +28,9 @@ class ProductCard extends StatelessWidget {
                   child: CachedNetworkImage(
                     imageUrl: product.imageUrl ?? '',
                     height: 150, width: double.infinity, fit: BoxFit.cover,
-                    placeholder: (_, __) => Container(height: 150, color: Colors.grey[200]),
+                    placeholder: (_, __) => Container(height: 150, color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[800] : Colors.grey[200]),
                     errorWidget: (_, __, ___) => Container(
-                      height: 150, color: Colors.grey[200],
+                      height: 150, color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[800] : Colors.grey[200],
                       child: const Icon(Icons.image, size: 50),
                     ),
                   ),

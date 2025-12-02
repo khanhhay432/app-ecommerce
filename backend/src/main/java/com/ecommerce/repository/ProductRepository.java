@@ -11,6 +11,8 @@ import java.util.List;
 public interface ProductRepository extends JpaRepository<Product, Long> {
     Page<Product> findByIsActiveTrue(Pageable pageable);
     
+    Page<Product> findByIsActiveFalse(Pageable pageable);
+    
     Page<Product> findByCategoryIdAndIsActiveTrue(Long categoryId, Pageable pageable);
     
     List<Product> findByIsFeaturedTrueAndIsActiveTrue();
@@ -25,4 +27,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     
     @Query("SELECT p FROM Product p WHERE p.isActive = true ORDER BY p.createdAt DESC")
     List<Product> findNewArrivals(Pageable pageable);
+    
+    @Query("SELECT p FROM Product p WHERE p.isActive = true AND p.originalPrice IS NOT NULL AND p.originalPrice > p.price")
+    List<Product> findOnSale(Pageable pageable);
 }

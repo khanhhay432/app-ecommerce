@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../theme/app_theme.dart';
+import '../providers/theme_provider.dart';
+import '../providers/locale_provider.dart';
+import 'change_password_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -10,8 +14,6 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   bool _notifications = true;
   bool _emailNotifications = true;
-  bool _darkMode = false;
-  String _language = 'Tiếng Việt';
 
   @override
   Widget build(BuildContext context) {
@@ -24,11 +26,28 @@ class _SettingsScreenState extends State<SettingsScreen> {
             _buildSwitchTile('Email thông báo', 'Nhận email về đơn hàng và khuyến mãi', Icons.email_outlined, _emailNotifications, (v) => setState(() => _emailNotifications = v)),
           ]),
           _buildSection('Giao diện', [
-            _buildSwitchTile('Chế độ tối', 'Bật chế độ tối cho ứng dụng', Icons.dark_mode_outlined, _darkMode, (v) => setState(() => _darkMode = v)),
-            _buildSelectTile('Ngôn ngữ', _language, Icons.language, () => _showLanguageDialog()),
+            Consumer<ThemeProvider>(
+              builder: (context, themeProvider, _) => _buildSwitchTile(
+                'Chế độ tối',
+                'Bật chế độ tối cho ứng dụng',
+                Icons.dark_mode_outlined,
+                themeProvider.isDarkMode,
+                (v) => themeProvider.toggleTheme(),
+              ),
+            ),
+            Consumer<LocaleProvider>(
+              builder: (context, localeProvider, _) => _buildSelectTile(
+                'Ngôn ngữ',
+                localeProvider.isVietnamese ? 'Tiếng Việt' : 'English',
+                Icons.language,
+                () => _showLanguageDialog(localeProvider),
+              ),
+            ),
           ]),
           _buildSection('Bảo mật', [
-            _buildNavigationTile('Đổi mật khẩu', Icons.lock_outline, () {}),
+            _buildNavigationTile('Đổi mật khẩu', Icons.lock_outline, () {
+              Navigator.push(context, MaterialPageRoute(builder: (_) => const ChangePasswordScreen()));
+            }),
             _buildNavigationTile('Xác thực 2 bước', Icons.security, () {}),
           ]),
           _buildSection('Khác', [
@@ -36,11 +55,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
             _buildNavigationTile('Chính sách bảo mật', Icons.privacy_tip_outlined, () {}),
             _buildNavigationTile('Về chúng tôi', Icons.info_outline, () => _showAboutDialog()),
             _buildNavigationTile('Đánh giá ứng dụng', Icons.star_outline, () {}),
+            Consumer<ThemeProvider>(
+              builder: (context, themeProvider, _) => _buildNavigationTile(
+                'Reset về chế độ sáng',
+                Icons.refresh,
+                () async {
+                  await themeProvider.resetToLightMode();
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('✅ Đã reset về chế độ sáng')),
+                    );
+                  }
+                },
+              ),
+            ),
           ]),
           const SizedBox(height: 16),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Text('Phiên bản 1.0.0', style: TextStyle(color: Colors.grey[500]), textAlign: TextAlign.center),
+            child: Text('Phiên bản 1.0.0', style: TextStyle(color: AppTheme.getSecondaryTextColor(context)), textAlign: TextAlign.center),
           ),
           const SizedBox(height: 32),
         ],
@@ -54,7 +87,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
-          child: Text(title, style: TextStyle(color: Colors.grey[600], fontWeight: FontWeight.bold, fontSize: 13)),
+          child: Text(title, style: TextStyle(color: AppTheme.getSecondaryTextColor(context), fontWeight: FontWeight.bold, fontSize: 13)),
         ),
         ...children,
       ],
@@ -69,7 +102,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         child: Icon(icon, color: AppTheme.primaryColor),
       ),
       title: Text(title),
-      subtitle: Text(subtitle, style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+      subtitle: Text(subtitle, style: TextStyle(fontSize: 12, color: AppTheme.getSecondaryTextColor(context))),
       trailing: Switch(value: value, onChanged: onChanged, activeColor: AppTheme.primaryColor),
     );
   }
@@ -85,7 +118,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(value, style: TextStyle(color: Colors.grey[600])),
+          Text(value, style: TextStyle(color: AppTheme.getSecondaryTextColor(context))),
           const Icon(Icons.chevron_right),
         ],
       ),
@@ -106,19 +139,33 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  void _showLanguageDialog() {
+  void _showLanguageDialog(LocaleProvider localeProvider) {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
         title: const Text('Chọn ngôn ngữ'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
-          children: ['Tiếng Việt', 'English'].map((lang) => RadioListTile<String>(
-            title: Text(lang),
-            value: lang,
-            groupValue: _language,
-            onChanged: (v) { setState(() => _language = v!); Navigator.pop(context); },
-          )).toList(),
+          children: [
+            RadioListTile<String>(
+              title: const Text('Tiếng Việt'),
+              value: 'vi',
+              groupValue: localeProvider.locale.languageCode,
+              onChanged: (v) {
+                localeProvider.setLocale(const Locale('vi'));
+                Navigator.pop(context);
+              },
+            ),
+            RadioListTile<String>(
+              title: const Text('English'),
+              value: 'en',
+              groupValue: localeProvider.locale.languageCode,
+              onChanged: (v) {
+                localeProvider.setLocale(const Locale('en'));
+                Navigator.pop(context);
+              },
+            ),
+          ],
         ),
       ),
     );

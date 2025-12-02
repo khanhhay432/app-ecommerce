@@ -46,7 +46,7 @@ class HelpScreen extends StatelessWidget {
             const SizedBox(height: 12),
             const Text('Cần hỗ trợ?', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
-            Text('Liên hệ với chúng tôi qua các kênh sau', style: TextStyle(color: Colors.grey[600])),
+            Text('Liên hệ với chúng tôi qua các kênh sau', style: TextStyle(color: AppTheme.getSecondaryTextColor(context))),
             const SizedBox(height: 16),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -87,7 +87,9 @@ class HelpScreen extends StatelessWidget {
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-            child: Text(answer, style: TextStyle(color: Colors.grey[600])),
+            child: Builder(
+              builder: (context) => Text(answer, style: TextStyle(color: AppTheme.getSecondaryTextColor(context))),
+            ),
           ),
         ],
       ),

@@ -1,17 +1,22 @@
 package com.ecommerce.service;
 
 import com.ecommerce.dto.CartDTO;
-import com.ecommerce.entity.*;
-import com.ecommerce.repository.*;
+import com.ecommerce.entity.Cart;
+import com.ecommerce.entity.CartItem;
+import com.ecommerce.entity.Product;
+import com.ecommerce.entity.User;
+import com.ecommerce.repository.CartItemRepository;
+import com.ecommerce.repository.CartRepository;
+import com.ecommerce.repository.ProductRepository;
+import com.ecommerce.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import java.math.BigDecimal;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class CartService {
+    
     private final CartRepository cartRepository;
     private final CartItemRepository cartItemRepository;
     private final ProductRepository productRepository;
@@ -19,84 +24,87 @@ public class CartService {
     
     public CartDTO getCart(Long userId) {
         Cart cart = getOrCreateCart(userId);
-        return toDTO(cart);
+        return CartDTO.fromEntity(cart);
     }
     
     @Transactional
-    public CartDTO addToCart(Long userId, Long productId, int quantity) {
+    public CartDTO addToCart(Long userId, Long productId, Integer quantity) {
         Cart cart = getOrCreateCart(userId);
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new RuntimeException("Product not found"));
         
-        CartItem item = cartItemRepository.findByCartIdAndProductId(cart.getId(), productId)
-                .orElse(CartItem.builder().cart(cart).product(product).quantity(0).build());
+        if (product.getStockQuantity() < quantity) {
+            throw new RuntimeException("Insufficient stock");
+        }
         
-        item.setQuantity(item.getQuantity() + quantity);
-        cartItemRepository.save(item);
+        CartItem existingItem = cartItemRepository.findByCartIdAndProductId(cart.getId(), productId)
+                .orElse(null);
         
-        return toDTO(cartRepository.findById(cart.getId()).orElse(cart));
+        if (existingItem != null) {
+            existingItem.setQuantity(existingItem.getQuantity() + quantity);
+            cartItemRepository.save(existingItem);
+        } else {
+            CartItem newItem = CartItem.builder()
+                    .cart(cart)
+                    .product(product)
+                    .quantity(quantity)
+                    .build();
+            cart.getItems().add(newItem);
+            cartItemRepository.save(newItem);
+        }
+        
+        return CartDTO.fromEntity(cartRepository.findById(cart.getId()).get());
     }
     
     @Transactional
-    public CartDTO updateCartItem(Long userId, Long productId, int quantity) {
+    public CartDTO updateCartItem(Long userId, Long productId, Integer quantity) {
         Cart cart = getOrCreateCart(userId);
+        
         CartItem item = cartItemRepository.findByCartIdAndProductId(cart.getId(), productId)
                 .orElseThrow(() -> new RuntimeException("Item not found in cart"));
         
         if (quantity <= 0) {
+            cart.getItems().remove(item);
             cartItemRepository.delete(item);
         } else {
+            Product product = item.getProduct();
+            if (product.getStockQuantity() < quantity) {
+                throw new RuntimeException("Insufficient stock");
+            }
             item.setQuantity(quantity);
             cartItemRepository.save(item);
         }
         
-        return toDTO(cartRepository.findById(cart.getId()).orElse(cart));
+        return CartDTO.fromEntity(cartRepository.findById(cart.getId()).get());
     }
     
     @Transactional
     public CartDTO removeFromCart(Long userId, Long productId) {
         Cart cart = getOrCreateCart(userId);
-        cartItemRepository.findByCartIdAndProductId(cart.getId(), productId)
-                .ifPresent(cartItemRepository::delete);
-        return toDTO(cartRepository.findById(cart.getId()).orElse(cart));
+        
+        CartItem item = cartItemRepository.findByCartIdAndProductId(cart.getId(), productId)
+                .orElseThrow(() -> new RuntimeException("Item not found in cart"));
+        
+        cart.getItems().remove(item);
+        cartItemRepository.delete(item);
+        
+        return CartDTO.fromEntity(cartRepository.findById(cart.getId()).get());
     }
     
     @Transactional
     public void clearCart(Long userId) {
         Cart cart = getOrCreateCart(userId);
+        cart.getItems().clear();
         cartItemRepository.deleteByCartId(cart.getId());
     }
     
     private Cart getOrCreateCart(Long userId) {
-        return cartRepository.findByUserId(userId).orElseGet(() -> {
-            User user = userRepository.findById(userId).orElseThrow();
-            return cartRepository.save(Cart.builder().user(user).build());
-        });
-    }
-    
-    private CartDTO toDTO(Cart cart) {
-        var items = cart.getItems().stream().map(item -> 
-            com.ecommerce.dto.CartItemDTO.builder()
-                .id(item.getId())
-                .productId(item.getProduct().getId())
-                .productName(item.getProduct().getName())
-                .productImage(item.getProduct().getImageUrl())
-                .price(item.getProduct().getPrice())
-                .quantity(item.getQuantity())
-                .subtotal(item.getProduct().getPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
-                .stockQuantity(item.getProduct().getStockQuantity())
-                .build()
-        ).collect(Collectors.toList());
-        
-        BigDecimal total = items.stream()
-                .map(i -> i.getSubtotal())
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-        
-        return CartDTO.builder()
-                .id(cart.getId())
-                .items(items)
-                .totalAmount(total)
-                .totalItems(items.size())
-                .build();
+        return cartRepository.findByUserId(userId)
+                .orElseGet(() -> {
+                    User user = userRepository.findById(userId)
+                            .orElseThrow(() -> new RuntimeException("User not found"));
+                    Cart newCart = Cart.builder().user(user).build();
+                    return cartRepository.save(newCart);
+                });
     }
 }

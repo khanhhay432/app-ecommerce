@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'dart:async';
-import '../providers/app_provider.dart';
-import '../widgets/animated_product_card.dart';
+import '../models/product.dart';
+import '../services/product_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/animated_product_card.dart';
+import '../widgets/shimmer_loading.dart';
 
 class FlashSaleScreen extends StatefulWidget {
   const FlashSaleScreen({super.key});
@@ -12,94 +12,76 @@ class FlashSaleScreen extends StatefulWidget {
 }
 
 class _FlashSaleScreenState extends State<FlashSaleScreen> {
-  late Timer _timer;
-  Duration _remaining = const Duration(hours: 5, minutes: 30, seconds: 45);
+  List<Product> _products = [];
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (_remaining.inSeconds > 0) {
-        setState(() => _remaining = _remaining - const Duration(seconds: 1));
-      }
-    });
+    _loadProducts();
   }
 
-  @override
-  void dispose() {
-    _timer.cancel();
-    super.dispose();
+  Future<void> _loadProducts() async {
+    setState(() => _isLoading = true);
+    final products = await ProductService.getOnSaleProducts(limit: 50);
+    if (mounted) setState(() { _products = products; _isLoading = false; });
   }
 
   @override
   Widget build(BuildContext context) {
-    final provider = context.watch<AppProvider>();
-    final saleProducts = provider.products.where((p) => p.discountPercent != null && p.discountPercent! >= 10).toList();
-
     return Scaffold(
+      backgroundColor: AppTheme.backgroundColor,
       body: CustomScrollView(
+        physics: const BouncingScrollPhysics(),
         slivers: [
           SliverAppBar(
-            expandedHeight: 200,
+            expandedHeight: 180,
             pinned: true,
+            backgroundColor: AppTheme.secondaryColor,
             flexibleSpace: FlexibleSpaceBar(
               background: Container(
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(colors: [Color(0xFFFF416C), Color(0xFFFF4B2B)], begin: Alignment.topLeft, end: Alignment.bottomRight),
-                ),
-                child: SafeArea(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const SizedBox(height: 40),
-                      const Text('⚡ FLASH SALE ⚡', style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold, letterSpacing: 2)),
-                      const SizedBox(height: 8),
-                      const Text('Giảm giá sốc - Số lượng có hạn!', style: TextStyle(color: Colors.white70)),
-                      const SizedBox(height: 16),
-                      _buildCountdown(),
-                    ],
-                  ),
+                decoration: const BoxDecoration(gradient: AppTheme.secondaryGradient),
+                child: Stack(
+                  children: [
+                    Positioned(right: -50, bottom: -50, child: Icon(Icons.flash_on, size: 200, color: Colors.white.withOpacity(0.1))),
+                    Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), borderRadius: BorderRadius.circular(20)),
+                            child: const Row(mainAxisSize: MainAxisSize.min, children: [Icon(Icons.flash_on, color: Colors.white, size: 16), SizedBox(width: 4), Text('FLASH SALE', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12))]),
+                          ),
+                          const SizedBox(height: 12),
+                          const Text('Giảm giá sốc!', style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold)),
+                          const Text('Ưu đãi có hạn, nhanh tay kẻo lỡ', style: TextStyle(color: Colors.white70)),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
           ),
           SliverPadding(
-            padding: const EdgeInsets.all(12),
-            sliver: SliverGrid(
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2, childAspectRatio: 0.62, crossAxisSpacing: 12, mainAxisSpacing: 12,
-              ),
-              delegate: SliverChildBuilderDelegate(
-                (_, i) => AnimatedProductCard(product: saleProducts[i], index: i),
-                childCount: saleProducts.length,
-              ),
-            ),
+            padding: const EdgeInsets.all(16),
+            sliver: _isLoading
+                ? SliverGrid(
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, childAspectRatio: 0.68, crossAxisSpacing: 12, mainAxisSpacing: 12),
+                    delegate: SliverChildBuilderDelegate((_, __) => const ShimmerProductCard(), childCount: 6),
+                  )
+                : _products.isEmpty
+                    ? SliverToBoxAdapter(child: SizedBox(height: 300, child: Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.flash_off, size: 60, color: AppTheme.getTertiaryTextColor(context)), const SizedBox(height: 16), Text('Chưa có sản phẩm giảm giá', style: TextStyle(color: AppTheme.getSecondaryTextColor(context)))]))))
+                    : SliverGrid(
+                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, childAspectRatio: 0.68, crossAxisSpacing: 12, mainAxisSpacing: 12),
+                        delegate: SliverChildBuilderDelegate((_, i) => AnimatedProductCard(product: _products[i], index: i), childCount: _products.length),
+                      ),
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildCountdown() {
-    final hours = _remaining.inHours.toString().padLeft(2, '0');
-    final minutes = (_remaining.inMinutes % 60).toString().padLeft(2, '0');
-    final seconds = (_remaining.inSeconds % 60).toString().padLeft(2, '0');
-
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        _buildTimeBox(hours), const Text(' : ', style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
-        _buildTimeBox(minutes), const Text(' : ', style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
-        _buildTimeBox(seconds),
-      ],
-    );
-  }
-
-  Widget _buildTimeBox(String value) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8)),
-      child: Text(value, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFFFF416C))),
     );
   }
 }

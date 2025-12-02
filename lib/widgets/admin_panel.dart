@@ -4,6 +4,7 @@ import '../providers/app_provider.dart';
 import '../theme/app_theme.dart';
 import '../models/product.dart';
 import '../screens/admin/add_product_screen.dart';
+import '../screens/admin/manage_products_screen.dart';
 import '../screens/admin/manage_orders_screen.dart';
 import '../screens/admin/analytics_screen.dart';
 import '../screens/admin/admin_settings_screen.dart';
@@ -16,17 +17,17 @@ class AdminPanel extends StatelessWidget {
     return Consumer<AppProvider>(
       builder: (context, provider, child) {
         if (!provider.isAdmin) {
-          return const Center(
+          return Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.lock, size: 64, color: AppTheme.textTertiary),
-                SizedBox(height: 16),
+                const Icon(Icons.lock, size: 64, color: AppTheme.textTertiary),
+                const SizedBox(height: 16),
                 Text(
                   'Bạn không có quyền truy cập',
                   style: TextStyle(
                     fontSize: 18,
-                    color: AppTheme.textSecondary,
+                    color: AppTheme.getSecondaryTextColor(context),
                   ),
                 ),
               ],
@@ -48,11 +49,11 @@ class AdminPanel extends StatelessWidget {
               children: [
                 _buildWelcomeCard(provider),
                 const SizedBox(height: 20),
-                _buildStatsCards(provider),
+                _buildStatsCards(context, provider),
                 const SizedBox(height: 20),
                 _buildQuickActions(context, provider),
                 const SizedBox(height: 20),
-                _buildRecentOrders(),
+                _buildRecentOrders(context),
               ],
             ),
           ),
@@ -146,11 +147,12 @@ class AdminPanel extends StatelessWidget {
     );
   }
 
-  Widget _buildStatsCards(AppProvider provider) {
+  Widget _buildStatsCards(BuildContext context, AppProvider provider) {
     return Row(
       children: [
         Expanded(
           child: _buildStatCard(
+            context,
             'Sản phẩm',
             '${provider.products.length}',
             Icons.inventory,
@@ -160,6 +162,7 @@ class AdminPanel extends StatelessWidget {
         const SizedBox(width: 12),
         Expanded(
           child: _buildStatCard(
+            context,
             'Đơn hàng',
             '${provider.orders.length}',
             Icons.shopping_bag,
@@ -169,6 +172,7 @@ class AdminPanel extends StatelessWidget {
         const SizedBox(width: 12),
         Expanded(
           child: _buildStatCard(
+            context,
             'Danh mục',
             '${provider.categories.length}',
             Icons.category,
@@ -179,10 +183,22 @@ class AdminPanel extends StatelessWidget {
     );
   }
 
-  Widget _buildStatCard(String title, String value, IconData icon, Color color) {
+  Widget _buildStatCard(BuildContext context, String title, String value, IconData icon, Color color) {
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: AppTheme.cardDecoration,
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Theme.of(context).brightness == Brightness.dark 
+                ? Colors.black.withOpacity(0.3) 
+                : AppTheme.primaryColor.withOpacity(0.1),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
       child: Column(
         children: [
           Container(
@@ -196,18 +212,18 @@ class AdminPanel extends StatelessWidget {
           const SizedBox(height: 12),
           Text(
             value,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
-              color: AppTheme.textPrimary,
+              color: AppTheme.getPrimaryTextColor(context),
             ),
           ),
           const SizedBox(height: 4),
           Text(
             title,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12,
-              color: AppTheme.textSecondary,
+              color: AppTheme.getSecondaryTextColor(context),
             ),
           ),
         ],
@@ -219,12 +235,12 @@ class AdminPanel extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Thao tác nhanh',
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
-            color: AppTheme.textPrimary,
+            color: AppTheme.getPrimaryTextColor(context),
           ),
         ),
         const SizedBox(height: 12),
@@ -237,15 +253,17 @@ class AdminPanel extends StatelessWidget {
           childAspectRatio: 1.5,
           children: [
             _buildActionCard(
-              'Thêm sản phẩm',
-              Icons.add_box,
+              context,
+              'Quản lý sản phẩm',
+              Icons.inventory_2,
               AppTheme.successColor,
               () => Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => const AddProductScreen()),
+                MaterialPageRoute(builder: (_) => const ManageProductsScreen()),
               ),
             ),
             _buildActionCard(
+              context,
               'Quản lý đơn hàng',
               Icons.list_alt,
               AppTheme.primaryColor,
@@ -255,6 +273,7 @@ class AdminPanel extends StatelessWidget {
               ),
             ),
             _buildActionCard(
+              context,
               'Thống kê',
               Icons.analytics,
               AppTheme.warningColor,
@@ -264,9 +283,10 @@ class AdminPanel extends StatelessWidget {
               ),
             ),
             _buildActionCard(
+              context,
               'Cài đặt',
               Icons.settings,
-              AppTheme.textSecondary,
+              AppTheme.getSecondaryTextColor(context),
               () => Navigator.push(
                 context,
                 MaterialPageRoute(builder: (_) => const AdminSettingsScreen()),
@@ -278,12 +298,24 @@ class AdminPanel extends StatelessWidget {
     );
   }
 
-  Widget _buildActionCard(String title, IconData icon, Color color, VoidCallback onTap) {
+  Widget _buildActionCard(BuildContext context, String title, IconData icon, Color color, VoidCallback onTap) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.all(16),
-        decoration: AppTheme.cardDecoration,
+        decoration: BoxDecoration(
+          color: Theme.of(context).cardColor,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Theme.of(context).brightness == Brightness.dark 
+                  ? Colors.black.withOpacity(0.3) 
+                  : AppTheme.primaryColor.withOpacity(0.1),
+              blurRadius: 20,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -299,10 +331,10 @@ class AdminPanel extends StatelessWidget {
             Text(
               title,
               textAlign: TextAlign.center,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
-                color: AppTheme.textPrimary,
+                color: AppTheme.getPrimaryTextColor(context),
               ),
             ),
           ],
@@ -311,30 +343,42 @@ class AdminPanel extends StatelessWidget {
     );
   }
 
-  Widget _buildRecentOrders() {
+  Widget _buildRecentOrders(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Đơn hàng gần đây',
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
-            color: AppTheme.textPrimary,
+            color: AppTheme.getPrimaryTextColor(context),
           ),
         ),
         const SizedBox(height: 12),
         Container(
           padding: const EdgeInsets.all(16),
-          decoration: AppTheme.cardDecoration,
-          child: const Center(
+          decoration: BoxDecoration(
+            color: Theme.of(context).cardColor,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: Theme.of(context).brightness == Brightness.dark 
+                    ? Colors.black.withOpacity(0.3) 
+                    : AppTheme.primaryColor.withOpacity(0.1),
+                blurRadius: 20,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Center(
             child: Column(
               children: [
-                Icon(Icons.inbox, size: 48, color: AppTheme.textTertiary),
-                SizedBox(height: 8),
+                const Icon(Icons.inbox, size: 48, color: AppTheme.textTertiary),
+                const SizedBox(height: 8),
                 Text(
                   'Chưa có đơn hàng nào',
-                  style: TextStyle(color: AppTheme.textSecondary),
+                  style: TextStyle(color: AppTheme.getSecondaryTextColor(context)),
                 ),
               ],
             ),

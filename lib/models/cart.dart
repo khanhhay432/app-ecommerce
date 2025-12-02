@@ -1,37 +1,4 @@
-class CartItem {
-  final int id;
-  final int productId;
-  final String productName;
-  final String? productImage;
-  final double price;
-  final int quantity;
-  final double subtotal;
-  final int stockQuantity;
-
-  CartItem({
-    required this.id,
-    required this.productId,
-    required this.productName,
-    this.productImage,
-    required this.price,
-    required this.quantity,
-    required this.subtotal,
-    required this.stockQuantity,
-  });
-
-  factory CartItem.fromJson(Map<String, dynamic> json) {
-    return CartItem(
-      id: json['id'],
-      productId: json['productId'],
-      productName: json['productName'],
-      productImage: json['productImage'],
-      price: (json['price'] as num).toDouble(),
-      quantity: json['quantity'],
-      subtotal: (json['subtotal'] as num).toDouble(),
-      stockQuantity: json['stockQuantity'] ?? 0,
-    );
-  }
-}
+import 'cart_item.dart';
 
 class Cart {
   final int id;
@@ -39,14 +6,28 @@ class Cart {
   final double totalAmount;
   final int totalItems;
 
-  Cart({required this.id, required this.items, required this.totalAmount, required this.totalItems});
+  Cart({
+    required this.id, 
+    required this.items, 
+    required this.totalAmount, 
+    required this.totalItems,
+  });
 
   factory Cart.fromJson(Map<String, dynamic> json) {
     return Cart(
-      id: json['id'],
-      items: (json['items'] as List).map((e) => CartItem.fromJson(e)).toList(),
-      totalAmount: (json['totalAmount'] as num).toDouble(),
+      id: json['id'] ?? 0,
+      items: (json['items'] as List?)?.map((e) => CartItem.fromJson(e)).toList() ?? [],
+      totalAmount: (json['totalAmount'] as num?)?.toDouble() ?? 0.0,
       totalItems: json['totalItems'] ?? 0,
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'items': items.map((e) => e.toJson()).toList(),
+      'totalAmount': totalAmount,
+      'totalItems': totalItems,
+    };
   }
 }

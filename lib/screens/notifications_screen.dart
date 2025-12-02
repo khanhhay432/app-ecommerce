@@ -26,7 +26,7 @@ class NotificationsScreen extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.notifications_none, size: 80, color: Colors.grey[300]),
+                  Icon(Icons.notifications_none, size: 80, color: AppTheme.getTertiaryTextColor(context)),
                   const SizedBox(height: 16),
                   const Text('Không có thông báo', style: TextStyle(fontSize: 18)),
                 ],
@@ -34,12 +34,12 @@ class NotificationsScreen extends StatelessWidget {
             )
           : ListView.builder(
               itemCount: notifications.length,
-              itemBuilder: (_, i) => _buildNotificationItem(notifications[i], i),
+              itemBuilder: (context, i) => _buildNotificationItem(context, notifications[i], i),
             ),
     );
   }
 
-  Widget _buildNotificationItem(Map<String, dynamic> notification, int index) {
+  Widget _buildNotificationItem(BuildContext context, Map<String, dynamic> notification, int index) {
     IconData icon;
     Color color;
     switch (notification['type']) {
@@ -56,9 +56,17 @@ class NotificationsScreen extends StatelessWidget {
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
         decoration: BoxDecoration(
-          color: notification['read'] ? Colors.white : AppTheme.primaryColor.withOpacity(0.05),
+          color: notification['read'] 
+              ? Theme.of(context).cardColor 
+              : AppTheme.primaryColor.withOpacity(
+                  Theme.of(context).brightness == Brightness.dark ? 0.15 : 0.05
+                ),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: notification['read'] ? Colors.grey[200]! : AppTheme.primaryColor.withOpacity(0.2)),
+          border: Border.all(
+            color: notification['read'] 
+                ? Theme.of(context).dividerColor
+                : AppTheme.primaryColor.withOpacity(0.3)
+          ),
         ),
         child: ListTile(
           contentPadding: const EdgeInsets.all(12),
@@ -72,9 +80,9 @@ class NotificationsScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 4),
-              Text(notification['message'], style: TextStyle(color: Colors.grey[600], fontSize: 13)),
+              Text(notification['message'], style: TextStyle(color: AppTheme.getSecondaryTextColor(context), fontSize: 13)),
               const SizedBox(height: 4),
-              Text(notification['time'], style: TextStyle(color: Colors.grey[400], fontSize: 12)),
+              Text(notification['time'], style: TextStyle(color: AppTheme.getHintTextColor(context), fontSize: 12)),
             ],
           ),
           trailing: !notification['read'] ? Container(width: 8, height: 8, decoration: const BoxDecoration(color: AppTheme.primaryColor, shape: BoxShape.circle)) : null,

@@ -161,10 +161,10 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
       padding: const EdgeInsets.only(bottom: 12),
       child: Text(
         title,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 18,
           fontWeight: FontWeight.bold,
-          color: AppTheme.textPrimary,
+          color: AppTheme.getPrimaryTextColor(context),
         ),
       ),
     );
@@ -172,7 +172,7 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
 
   Widget _buildSettingsCard(List<Widget> children) {
     return Container(
-      decoration: AppTheme.cardDecoration,
+      decoration: AppTheme.cardDecorationWithContext(context),
       child: Column(
         children: children.asMap().entries.map((entry) {
           final index = entry.key;
@@ -207,16 +207,16 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
       ),
       title: Text(
         title,
-        style: const TextStyle(
+        style: TextStyle(
           fontWeight: FontWeight.w600,
-          color: AppTheme.textPrimary,
+          color: AppTheme.getPrimaryTextColor(context),
         ),
       ),
       subtitle: Text(
         subtitle,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 12,
-          color: AppTheme.textSecondary,
+          color: AppTheme.getSecondaryTextColor(context),
         ),
       ),
       trailing: Switch(
@@ -247,9 +247,9 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
       ),
       title: Text(
         title,
-        style: const TextStyle(
+        style: TextStyle(
           fontWeight: FontWeight.w600,
-          color: AppTheme.textPrimary,
+          color: AppTheme.getPrimaryTextColor(context),
         ),
       ),
       subtitle: Column(
@@ -257,9 +257,9 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
         children: [
           Text(
             subtitle,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12,
-              color: AppTheme.textSecondary,
+              color: AppTheme.getSecondaryTextColor(context),
             ),
           ),
           const SizedBox(height: 8),
@@ -283,7 +283,7 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
                 ),
                 child: Text(
                   '${value.toInt()}',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.w600,
                     color: AppTheme.warningColor,
                   ),
@@ -315,16 +315,16 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
       ),
       title: Text(
         title,
-        style: const TextStyle(
+        style: TextStyle(
           fontWeight: FontWeight.w600,
-          color: AppTheme.textPrimary,
+          color: AppTheme.getPrimaryTextColor(context),
         ),
       ),
       subtitle: Text(
         subtitle,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 12,
-          color: AppTheme.textSecondary,
+          color: AppTheme.getSecondaryTextColor(context),
         ),
       ),
       trailing: DropdownButton<String>(
@@ -362,14 +362,14 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
         title,
         style: TextStyle(
           fontWeight: FontWeight.w600,
-          color: isDestructive ? AppTheme.errorColor : AppTheme.textPrimary,
+          color: isDestructive ? AppTheme.errorColor : AppTheme.getPrimaryTextColor(context),
         ),
       ),
       subtitle: Text(
         subtitle,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 12,
-          color: AppTheme.textSecondary,
+          color: AppTheme.getSecondaryTextColor(context),
         ),
       ),
       trailing: Icon(

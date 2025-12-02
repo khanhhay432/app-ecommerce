@@ -1,7 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
 import '../providers/app_provider.dart';
+import '../providers/theme_provider.dart';
+import '../providers/locale_provider.dart';
 import '../theme/app_theme.dart';
+import '../services/user_service.dart';
+import '../services/image_service.dart';
+import 'change_password_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -13,12 +20,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
   bool _isEditing = false;
+  bool _isSaving = false;
+  File? _selectedImage;
 
   @override
   void initState() {
     super.initState();
     final provider = context.read<AppProvider>();
     _nameController.text = provider.userName;
+    _phoneController.text = provider.currentUser?.phone ?? '';
   }
 
   @override
@@ -28,104 +38,217 @@ class _ProfileScreenState extends State<ProfileScreen> {
     super.dispose();
   }
 
+  Future<void> _pickImage() async {
+    final picker = ImagePicker();
+    final image = await picker.pickImage(source: ImageSource.gallery);
+    if (image != null) {
+      setState(() => _selectedImage = File(image.path));
+    }
+  }
+
+  Future<void> _saveProfile() async {
+    if (_nameController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Vui lòng nhập họ tên')),
+      );
+      return;
+    }
+
+    setState(() => _isSaving = true);
+
+    try {
+      // Upload avatar nếu có
+      String? avatarUrl;
+      if (_selectedImage != null) {
+        avatarUrl = await ImageService.uploadImage(_selectedImage!);
+      }
+
+      // Update profile
+      final user = await UserService.updateProfile(
+        fullName: _nameController.text,
+        phone: _phoneController.text.isNotEmpty ? _phoneController.text : null,
+        avatarUrl: avatarUrl,
+      );
+
+      if (user != null && mounted) {
+        // Update provider
+        context.read<AppProvider>().updateUserInfo(user);
+        
+        setState(() {
+          _isEditing = false;
+          _isSaving = false;
+          _selectedImage = null;
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('✅ Cập nhật thành công!'),
+            backgroundColor: AppTheme.successColor,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isSaving = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('❌ Lỗi: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('Thông tin cá nhân'),
+        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
+        elevation: 0,
+        title: const Text('Thông tin cá nhân', style: TextStyle(fontWeight: FontWeight.bold)),
         actions: [
           TextButton(
             onPressed: () => setState(() => _isEditing = !_isEditing),
-            child: Text(_isEditing ? 'Hủy' : 'Sửa'),
+            child: Text(_isEditing ? 'Hủy' : 'Sửa', style: const TextStyle(color: AppTheme.primaryColor)),
           ),
         ],
       ),
       body: Consumer<AppProvider>(
-        builder: (_, provider, __) => ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            Center(
-              child: Stack(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: const BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: LinearGradient(colors: [AppTheme.primaryColor, AppTheme.secondaryColor]),
+        builder: (context, provider, child) {
+          return ListView(
+            padding: const EdgeInsets.all(16),
+            physics: const BouncingScrollPhysics(),
+            children: [
+              // Avatar section
+              Center(
+                child: GestureDetector(
+                  onTap: _isEditing ? _pickImage : null,
+                  child: Stack(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(shape: BoxShape.circle, gradient: AppTheme.primaryGradient),
+                        child: CircleAvatar(
+                          radius: 60,
+                          backgroundColor: Theme.of(context).cardColor,
+                          backgroundImage: _selectedImage != null
+                              ? FileImage(_selectedImage!)
+                              : (provider.userAvatar != null ? NetworkImage(provider.userAvatar!) : null),
+                          child: _selectedImage == null && provider.userAvatar == null
+                              ? Text(provider.userName.isNotEmpty ? provider.userName[0].toUpperCase() : 'U', style: const TextStyle(fontSize: 40, fontWeight: FontWeight.bold, color: AppTheme.primaryColor))
+                              : null,
+                        ),
+                      ),
+                      if (_isEditing)
+                        Positioned(
+                          bottom: 0,
+                          right: 0,
+                          child: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(color: AppTheme.primaryColor, shape: BoxShape.circle, border: Border.all(color: Colors.white, width: 2)),
+                            child: const Icon(Icons.camera_alt, color: Colors.white, size: 20),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 32),
+              // Info cards
+              _buildInfoCard('Email', provider.userEmail, Icons.email_outlined, editable: false),
+              const SizedBox(height: 16),
+              _buildEditableCard('Họ và tên', _nameController, Icons.person_outline),
+              const SizedBox(height: 16),
+              _buildEditableCard('Số điện thoại', _phoneController, Icons.phone_outlined),
+              const SizedBox(height: 16),
+              _buildInfoCard('Vai trò', provider.isAdmin ? 'Quản trị viên' : 'Khách hàng', Icons.badge_outlined, editable: false),
+              if (_isEditing) ...[
+                const SizedBox(height: 32),
+                SizedBox(
+                  width: double.infinity,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: AppTheme.primaryGradient,
+                      borderRadius: BorderRadius.circular(16),
                     ),
-                    child: CircleAvatar(
-                      radius: 60,
-                      backgroundColor: Colors.white,
-                      child: Text(provider.userName.isNotEmpty ? provider.userName[0].toUpperCase() : 'U',
-                        style: const TextStyle(fontSize: 48, fontWeight: FontWeight.bold, color: AppTheme.primaryColor)),
+                    child: ElevatedButton(
+                      onPressed: _isSaving ? null : _saveProfile,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.transparent,
+                        shadowColor: Colors.transparent,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                      ),
+                      child: _isSaving
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
+                            )
+                          : const Text(
+                              'Lưu thay đổi',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
                     ),
                   ),
-                  Positioned(
-                    bottom: 0, right: 0,
-                    child: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: const BoxDecoration(color: AppTheme.primaryColor, shape: BoxShape.circle),
-                      child: const Icon(Icons.camera_alt, color: Colors.white, size: 20),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 32),
-            _buildTextField('Họ tên', _nameController, Icons.person_outline, enabled: _isEditing),
-            const SizedBox(height: 16),
-            _buildInfoCard('Email', provider.userEmail, Icons.email_outlined),
-            const SizedBox(height: 16),
-            _buildTextField('Số điện thoại', _phoneController, Icons.phone_outlined, enabled: _isEditing),
-            if (_isEditing) ...[
-              const SizedBox(height: 24),
-              ElevatedButton(
-                onPressed: () {
-                  setState(() => _isEditing = false);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Đã cập nhật thông tin!'), backgroundColor: Colors.green),
-                  );
-                },
-                style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
-                child: const Text('Lưu thay đổi'),
-              ),
+                ),
+              ],
+              const SizedBox(height: 32),
             ],
-          ],
-        ),
+          );
+        },
       ),
     );
   }
 
-  Widget _buildTextField(String label, TextEditingController controller, IconData icon, {bool enabled = true}) {
-    return TextFormField(
-      controller: controller,
-      enabled: enabled,
-      decoration: InputDecoration(
-        labelText: label,
-        prefixIcon: Icon(icon),
-        filled: true,
-        fillColor: enabled ? Colors.grey[100] : Colors.grey[50],
-      ),
-    );
-  }
-
-  Widget _buildInfoCard(String label, String value, IconData icon) {
+  Widget _buildInfoCard(String label, String value, IconData icon, {bool editable = true}) {
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: Colors.grey[100], borderRadius: BorderRadius.circular(12)),
-      child: Row(
-        children: [
-          Icon(icon, color: Colors.grey[600]),
-          const SizedBox(width: 16),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(label, style: TextStyle(color: Colors.grey[600], fontSize: 12)),
-              Text(value, style: const TextStyle(fontWeight: FontWeight.w500)),
-            ],
-          ),
-        ],
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor, 
+        borderRadius: BorderRadius.circular(16), 
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)]
       ),
+      child: Row(children: [
+        Container(padding: const EdgeInsets.all(10), decoration: BoxDecoration(color: AppTheme.primaryColor.withOpacity(0.1), borderRadius: BorderRadius.circular(12)), child: Icon(icon, color: AppTheme.primaryColor)),
+        const SizedBox(width: 16),
+        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(label, style: TextStyle(color: AppTheme.getSecondaryTextColor(context), fontSize: 12)),
+          const SizedBox(height: 4),
+          Text(value, style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 15)),
+        ])),
+      ]),
+    );
+  }
+
+  Widget _buildEditableCard(String label, TextEditingController controller, IconData icon) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor, 
+        borderRadius: BorderRadius.circular(16), 
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)]
+      ),
+      child: Row(children: [
+        Container(padding: const EdgeInsets.all(10), decoration: BoxDecoration(color: AppTheme.primaryColor.withOpacity(0.1), borderRadius: BorderRadius.circular(12)), child: Icon(icon, color: AppTheme.primaryColor)),
+        const SizedBox(width: 16),
+        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(label, style: TextStyle(color: AppTheme.getSecondaryTextColor(context), fontSize: 12)),
+          const SizedBox(height: 4),
+          _isEditing
+              ? TextField(controller: controller, decoration: const InputDecoration(isDense: true, contentPadding: EdgeInsets.zero, border: InputBorder.none), style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 15))
+              : Text(controller.text.isEmpty ? 'Chưa cập nhật' : controller.text, style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 15)),
+        ])),
+      ]),
     );
   }
 }

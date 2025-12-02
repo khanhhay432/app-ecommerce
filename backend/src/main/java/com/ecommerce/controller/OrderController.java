@@ -43,4 +43,12 @@ public class OrderController {
             @PathVariable Long id) {
         return ResponseEntity.ok(ApiResponse.success("Order cancelled", orderService.cancelOrder(id, user.getId())));
     }
+    
+    @PutMapping("/{id}/status")
+    public ResponseEntity<ApiResponse<OrderDTO>> updateOrderStatus(
+            @PathVariable Long id,
+            @RequestParam String status) {
+        return ResponseEntity.ok(ApiResponse.success("Order status updated", 
+                orderService.updateOrderStatus(id, status)));
+    }
 }

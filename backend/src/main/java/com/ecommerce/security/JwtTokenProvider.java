@@ -19,7 +19,8 @@ public class JwtTokenProvider {
     private long jwtExpiration;
     
     private SecretKey getSigningKey() {
-        return Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
+        byte[] keyBytes = jwtSecret.getBytes(StandardCharsets.UTF_8);
+        return Keys.hmacShaKeyFor(keyBytes);
     }
     
     public String generateToken(Authentication authentication) {
@@ -53,12 +54,16 @@ public class JwtTokenProvider {
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
+        
         return Long.parseLong(claims.getSubject());
     }
     
     public boolean validateToken(String token) {
         try {
-            Jwts.parser().verifyWith(getSigningKey()).build().parseSignedClaims(token);
+            Jwts.parser()
+                    .verifyWith(getSigningKey())
+                    .build()
+                    .parseSignedClaims(token);
             return true;
         } catch (JwtException | IllegalArgumentException e) {
             return false;

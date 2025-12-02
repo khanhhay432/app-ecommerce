@@ -129,6 +129,26 @@ public class OrderService {
         return toDTO(orderRepository.save(order));
     }
     
+    @Transactional
+    public OrderDTO updateOrderStatus(Long orderId, String status) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found"));
+        
+        try {
+            Order.OrderStatus newStatus = Order.OrderStatus.valueOf(status);
+            order.setStatus(newStatus);
+            
+            // Nếu chuyển sang DELIVERED, cập nhật payment status
+            if (newStatus == Order.OrderStatus.DELIVERED) {
+                order.setPaymentStatus(Order.PaymentStatus.PAID);
+            }
+            
+            return toDTO(orderRepository.save(order));
+        } catch (IllegalArgumentException e) {
+            throw new RuntimeException("Invalid order status: " + status);
+        }
+    }
+    
     private String generateOrderNumber() {
         return "ORD" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")) 
                 + UUID.randomUUID().toString().substring(0, 4).toUpperCase();

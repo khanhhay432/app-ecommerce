@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
 import '../../providers/app_provider.dart';
 import '../../theme/app_theme.dart';
 import '../../models/product.dart';
+import '../../services/image_service.dart';
 
 class AddProductScreen extends StatefulWidget {
   const AddProductScreen({super.key});
@@ -23,6 +26,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
   int _selectedCategoryId = 1;
   bool _isFeatured = false;
   bool _isLoading = false;
+  File? _selectedImage;
 
   @override
   void dispose() {
@@ -35,46 +39,92 @@ class _AddProductScreenState extends State<AddProductScreen> {
     super.dispose();
   }
 
+  Future<void> _pickImage() async {
+    final picker = ImagePicker();
+    final image = await picker.pickImage(source: ImageSource.gallery);
+    if (image != null) {
+      setState(() => _selectedImage = File(image.path));
+    }
+  }
+
   Future<void> _addProduct() async {
     if (!_formKey.currentState!.validate()) return;
     
     setState(() => _isLoading = true);
     
-    final provider = context.read<AppProvider>();
-    final category = provider.categories.firstWhere((c) => c.id == _selectedCategoryId);
-    
-    final product = Product(
-      id: DateTime.now().millisecondsSinceEpoch,
-      name: _nameController.text.trim(),
-      description: _descriptionController.text.trim(),
-      price: double.parse(_priceController.text),
-      originalPrice: _originalPriceController.text.isNotEmpty 
-          ? double.parse(_originalPriceController.text) 
-          : null,
-      stockQuantity: int.parse(_stockController.text),
-      soldQuantity: 0,
-      imageUrl: _imageUrlController.text.trim().isNotEmpty 
-          ? _imageUrlController.text.trim()
-          : 'https://via.placeholder.com/400x400/667EEA/FFFFFF?text=${Uri.encodeComponent(_nameController.text.trim())}',
-      isFeatured: _isFeatured,
-      categoryId: _selectedCategoryId,
-      categoryName: category.name,
-      averageRating: 0.0,
-      reviewCount: 0,
-    );
-    
-    provider.addProduct(product);
-    
-    setState(() => _isLoading = false);
-    
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Thêm sản phẩm thành công! 🎉'),
-          backgroundColor: AppTheme.successColor,
-        ),
+    try {
+      // Upload ảnh nếu có
+      String? imageUrl;
+      if (_selectedImage != null) {
+        print('📸 Uploading image...');
+        imageUrl = await ImageService.uploadImage(_selectedImage!);
+        if (imageUrl == null) {
+          throw Exception('Upload ảnh thất bại');
+        }
+        print('✅ Image uploaded: $imageUrl');
+      } else if (_imageUrlController.text.trim().isNotEmpty) {
+        imageUrl = _imageUrlController.text.trim();
+      } else {
+        imageUrl = 'https://via.placeholder.com/400x400/667EEA/FFFFFF?text=${Uri.encodeComponent(_nameController.text.trim())}';
+      }
+      
+      final provider = context.read<AppProvider>();
+      final category = provider.categories.firstWhere((c) => c.id == _selectedCategoryId);
+      
+      final product = Product(
+        id: DateTime.now().millisecondsSinceEpoch,
+        name: _nameController.text.trim(),
+        description: _descriptionController.text.trim(),
+        price: double.parse(_priceController.text),
+        originalPrice: _originalPriceController.text.isNotEmpty 
+            ? double.parse(_originalPriceController.text) 
+            : null,
+        stockQuantity: int.parse(_stockController.text),
+        soldQuantity: 0,
+        imageUrl: imageUrl,
+        isFeatured: _isFeatured,
+        categoryId: _selectedCategoryId,
+        categoryName: category.name,
+        averageRating: 0.0,
+        reviewCount: 0,
       );
-      Navigator.pop(context);
+      
+      // Gọi API để lưu vào MySQL
+      final success = await provider.addProduct(product);
+      
+      setState(() => _isLoading = false);
+      
+      if (mounted) {
+        if (success) {
+          // Reload danh sách sản phẩm
+          await provider.refreshData();
+          
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('✅ Đã lưu sản phẩm vào MySQL thành công!'),
+              backgroundColor: AppTheme.successColor,
+            ),
+          );
+          Navigator.pop(context, true); // Trả về true để báo đã thêm thành công
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('❌ Lỗi khi lưu sản phẩm vào MySQL'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      setState(() => _isLoading = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('❌ Lỗi: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
@@ -148,27 +198,70 @@ class _AddProductScreenState extends State<AddProductScreen> {
               ),
               const SizedBox(height: 16),
               
-              // Image URL
-              _buildTextField(
-                controller: _imageUrlController,
-                label: 'URL hình ảnh (tùy chọn)',
-                icon: Icons.image,
+              // Image Picker
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: AppTheme.cardDecorationWithContext(context),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Hình ảnh sản phẩm', style: TextStyle(fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 12),
+                    if (_selectedImage != null) ...[
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Image.file(_selectedImage!, height: 200, width: double.infinity, fit: BoxFit.cover),
+                      ),
+                      const SizedBox(height: 12),
+                    ],
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: _pickImage,
+                            icon: const Icon(Icons.photo_library),
+                            label: Text(_selectedImage == null ? 'Chọn ảnh từ máy' : 'Đổi ảnh'),
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
+                          ),
+                        ),
+                        if (_selectedImage != null) ...[
+                          const SizedBox(width: 8),
+                          IconButton(
+                            onPressed: () => setState(() => _selectedImage = null),
+                            icon: const Icon(Icons.close, color: Colors.red),
+                          ),
+                        ],
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    const Text('Hoặc', style: TextStyle(color: Colors.grey)),
+                    const SizedBox(height: 8),
+                    _buildTextField(
+                      controller: _imageUrlController,
+                      label: 'Nhập URL hình ảnh',
+                      icon: Icons.link,
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(height: 16),
               
               // Category
               Container(
                 padding: const EdgeInsets.all(16),
-                decoration: AppTheme.cardDecoration,
+                decoration: AppTheme.cardDecorationWithContext(context),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'Danh mục',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
-                        color: AppTheme.textPrimary,
+                        color: AppTheme.getPrimaryTextColor(context),
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -205,18 +298,18 @@ class _AddProductScreenState extends State<AddProductScreen> {
               // Featured toggle
               Container(
                 padding: const EdgeInsets.all(16),
-                decoration: AppTheme.cardDecoration,
+                decoration: AppTheme.cardDecorationWithContext(context),
                 child: Row(
                   children: [
                     const Icon(Icons.star, color: AppTheme.warningColor),
                     const SizedBox(width: 12),
-                    const Expanded(
+                    Expanded(
                       child: Text(
                         'Sản phẩm nổi bật',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
-                          color: AppTheme.textPrimary,
+                          color: AppTheme.getPrimaryTextColor(context),
                         ),
                       ),
                     ),
@@ -288,7 +381,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
     String? Function(String?)? validator,
   }) {
     return Container(
-      decoration: AppTheme.cardDecoration,
+      decoration: AppTheme.cardDecorationWithContext(context),
       child: TextFormField(
         controller: controller,
         decoration: InputDecoration(

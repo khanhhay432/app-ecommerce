@@ -33,10 +33,11 @@ class OptimizedImage extends StatelessWidget {
           width: width,
           height: height,
           fit: fit,
-          errorBuilder: (context, error, stackTrace) => _buildErrorWidget(),
+          errorBuilder: (context, error, stackTrace) => _buildErrorWidget(context),
         );
       } else {
         // Network image (fallback)
+        print('🖼️ [OptimizedImage] Loading image: $imageUrl');
         imageWidget = Image.network(
           imageUrl!,
           width: width,
@@ -44,13 +45,19 @@ class OptimizedImage extends StatelessWidget {
           fit: fit,
           loadingBuilder: (context, child, loadingProgress) {
             if (loadingProgress == null) return child;
-            return _buildPlaceholder();
+            return _buildPlaceholder(context);
           },
-          errorBuilder: (context, error, stackTrace) => _buildErrorWidget(),
+          errorBuilder: (context, error, stackTrace) {
+            print('❌ [OptimizedImage] Error loading image: $imageUrl');
+            print('Error: $error');
+            return _buildErrorWidget(context);
+          },
         );
       }
     } else {
-      imageWidget = _buildErrorWidget();
+      imageWidget = Builder(
+        builder: (context) => _buildErrorWidget(context),
+      );
     }
 
     if (borderRadius != null) {
@@ -63,14 +70,14 @@ class OptimizedImage extends StatelessWidget {
     return imageWidget;
   }
 
-  Widget _buildPlaceholder() {
+  Widget _buildPlaceholder(BuildContext context) {
     if (placeholder != null) return placeholder!;
     
     return Container(
       width: width,
       height: height,
       decoration: BoxDecoration(
-        color: Colors.grey[200],
+        color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[800] : Colors.grey[200],
         borderRadius: borderRadius,
       ),
       child: const Center(
@@ -82,14 +89,14 @@ class OptimizedImage extends StatelessWidget {
     );
   }
 
-  Widget _buildErrorWidget() {
+  Widget _buildErrorWidget(BuildContext context) {
     if (errorWidget != null) return errorWidget!;
     
     return Container(
       width: width,
       height: height,
       decoration: BoxDecoration(
-        color: Colors.grey[100],
+        color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF2D2D2D) : Colors.grey[100],
         borderRadius: borderRadius,
       ),
       child: Column(
@@ -98,14 +105,14 @@ class OptimizedImage extends StatelessWidget {
           Icon(
             Icons.image_not_supported_outlined,
             size: (height != null && height! < 100) ? 24 : 40,
-            color: Colors.grey[400],
+            color: AppTheme.getTertiaryTextColor(context),
           ),
           if (height == null || height! >= 100) ...[
             const SizedBox(height: 8),
             Text(
               'Không có hình ảnh',
               style: TextStyle(
-                color: Colors.grey[500],
+                color: AppTheme.getSecondaryTextColor(context),
                 fontSize: 12,
               ),
             ),

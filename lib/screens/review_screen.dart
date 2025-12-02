@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import '../models/product.dart';
 import '../theme/app_theme.dart';
+import '../services/review_service.dart';
 
 class ReviewScreen extends StatefulWidget {
   final Product product;
@@ -23,14 +24,63 @@ class _ReviewScreenState extends State<ReviewScreen> {
 
   Future<void> _submitReview() async {
     if (_commentController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Vui lòng nhập nhận xét'), backgroundColor: Colors.orange));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Vui lòng nhập nhận xét'), backgroundColor: Colors.orange),
+      );
       return;
     }
+    
     setState(() => _isLoading = true);
-    await Future.delayed(const Duration(seconds: 1));
-    if (mounted) {
-      Navigator.pop(context);
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Cảm ơn bạn đã đánh giá! ⭐'), backgroundColor: Colors.green));
+    
+    try {
+      final review = await ReviewService.createReview(
+        productId: widget.product.id,
+        rating: _rating.toInt(),
+        comment: _commentController.text,
+      );
+      
+      if (mounted) {
+        if (review != null) {
+          Navigator.pop(context, true); // Trả về true để reload reviews
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('✅ Cảm ơn bạn đã đánh giá!'),
+              backgroundColor: AppTheme.successColor,
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('❌ Lỗi khi gửi đánh giá'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        String errorMessage = '❌ Lỗi khi gửi đánh giá';
+        
+        // Parse error message
+        final errorStr = e.toString();
+        if (errorStr.contains('already reviewed')) {
+          errorMessage = '⚠️ Bạn đã đánh giá sản phẩm này rồi';
+        } else if (errorStr.contains('Unauthorized') || errorStr.contains('401')) {
+          errorMessage = '🔒 Vui lòng đăng nhập để đánh giá';
+        }
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(errorMessage),
+            backgroundColor: errorStr.contains('already reviewed') ? Colors.orange : Colors.red,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -75,7 +125,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
               ),
             ),
             const SizedBox(height: 8),
-            Center(child: Text(_getRatingText(), style: TextStyle(color: Colors.grey[600]))),
+            Center(child: Text(_getRatingText(), style: TextStyle(color: AppTheme.getSecondaryTextColor(context)))),
             const SizedBox(height: 24),
             const Text('Nhận xét của bạn', style: TextStyle(fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),

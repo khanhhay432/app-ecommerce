@@ -29,11 +29,23 @@ class ApiService {
   }
 
   static Future<Map<String, dynamic>> get(String endpoint, {bool auth = false}) async {
-    final response = await http.get(
-      Uri.parse('${ApiConfig.baseUrl}$endpoint'),
-      headers: await _getHeaders(auth: auth),
-    );
-    return _handleResponse(response);
+    final url = '${ApiConfig.baseUrl}$endpoint';
+    print('🌐 [ApiService] GET: $url');
+    
+    try {
+      final response = await http.get(
+        Uri.parse(url),
+        headers: await _getHeaders(auth: auth),
+      ).timeout(const Duration(seconds: 30));
+      
+      print('📡 [ApiService] Status: ${response.statusCode}');
+      print('📦 [ApiService] Response length: ${response.body.length} bytes');
+      return _handleResponse(response);
+    } catch (e) {
+      print('❌ [ApiService] Request failed: $e');
+      print('💡 [ApiService] Tip: Check if backend is running and IP is correct');
+      rethrow;
+    }
   }
 
   static Future<Map<String, dynamic>> post(String endpoint, Map<String, dynamic> body, {bool auth = false}) async {

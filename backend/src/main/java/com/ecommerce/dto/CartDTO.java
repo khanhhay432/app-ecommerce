@@ -1,35 +1,38 @@
 package com.ecommerce.dto;
 
+import com.ecommerce.entity.Cart;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.stream.Collectors;
 
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class CartDTO {
     private Long id;
     private List<CartItemDTO> items;
     private BigDecimal totalAmount;
     private Integer totalItems;
-
-    public CartDTO() {}
-    public CartDTO(Long id, List<CartItemDTO> items, BigDecimal totalAmount, Integer totalItems) {
-        this.id = id; this.items = items; this.totalAmount = totalAmount; this.totalItems = totalItems;
-    }
-
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
-    public List<CartItemDTO> getItems() { return items; }
-    public void setItems(List<CartItemDTO> items) { this.items = items; }
-    public BigDecimal getTotalAmount() { return totalAmount; }
-    public void setTotalAmount(BigDecimal totalAmount) { this.totalAmount = totalAmount; }
-    public Integer getTotalItems() { return totalItems; }
-    public void setTotalItems(Integer totalItems) { this.totalItems = totalItems; }
-
-    public static CartDTOBuilder builder() { return new CartDTOBuilder(); }
-    public static class CartDTOBuilder {
-        private Long id; private List<CartItemDTO> items; private BigDecimal totalAmount; private Integer totalItems;
-        public CartDTOBuilder id(Long id) { this.id = id; return this; }
-        public CartDTOBuilder items(List<CartItemDTO> items) { this.items = items; return this; }
-        public CartDTOBuilder totalAmount(BigDecimal totalAmount) { this.totalAmount = totalAmount; return this; }
-        public CartDTOBuilder totalItems(Integer totalItems) { this.totalItems = totalItems; return this; }
-        public CartDTO build() { return new CartDTO(id, items, totalAmount, totalItems); }
+    
+    public static CartDTO fromEntity(Cart cart) {
+        List<CartItemDTO> items = cart.getItems().stream()
+                .map(CartItemDTO::fromEntity)
+                .collect(Collectors.toList());
+        
+        BigDecimal total = items.stream()
+                .map(CartItemDTO::getSubtotal)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        
+        return CartDTO.builder()
+                .id(cart.getId())
+                .items(items)
+                .totalAmount(total)
+                .totalItems(items.size())
+                .build();
     }
 }
