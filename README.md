@@ -24,7 +24,7 @@
 
 ## 🚀 Cài đặt
 
-### 1. Backend (Spring Boot)
+### 1.  Backend (Spring Boot)
 ```bash
 cd backend
 mvn spring-boot:run
@@ -51,48 +51,22 @@ spring:
     url: jdbc:mysql://localhost:3306/ecommerce_db
     username: root
     password: your_password
-
-app:
-  base-url:   # Thay bằng IP máy bạn
 ```
 
 ### Flutter
 File: `lib/config/api_config.dart`
 ```dart
-static const String baseUrl = 'http://192.168.1.88:8080/api';
+static const String baseUrl = 'http://YOUR_IP:8080/api';
 ```
-
-## 👤 Tài khoản test
-
-**Admin:**
-- Email: admin@example.com
-- Password: admin123
-
-**User:**
-- Email: user@example.com  
-- Password: user123
-
-## 📱 Screenshots
-
-- Trang chủ với sản phẩm nổi bật
-- Giỏ hàng và thanh toán
-- Quản lý đơn hàng
-- Dark mode
-- Đa ngôn ngữ
 
 ## 🛠️ Tech Stack
 
-**Frontend:**
-- Flutter 3.10+
-- Provider (State management)
-- HTTP, SharedPreferences
-- PDF, Printing
-
-**Backend:**
-- Spring Boot 3.x
-- Spring Security + JWT
-- MySQL
-- Hibernate/JPA
+| Frontend | Backend |
+|----------|---------|
+| Flutter 3.10+ | Spring Boot 3.x |
+| Provider | Spring Security + JWT |
+| HTTP, SharedPreferences | MySQL |
+| PDF, Printing | Hibernate/JPA |
 
 ## 📝 License
 
